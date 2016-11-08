@@ -34,7 +34,7 @@ import org.apache.spark.mllib.linalg.Vectors;
 
 /**
  * Java example for bisecting k-means clustering.
- */
+ */ 
 public class JavaBisectingKMeansExample {
   public static void main(String[] args) {
     SparkConf sparkConf = new SparkConf().setAppName("JavaBisectingKMeansExample");
