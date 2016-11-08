@@ -36,7 +36,7 @@ import org.apache.spark.mllib.tree.model.DecisionTreeModel;
 import org.apache.spark.mllib.util.MLUtils;
 // $example off$
 
-class JavaDecisionTreeClassificationExample {
+public class JavaDecisionTreeClassificationExample {
 
   public static void main(String[] args) {
 
