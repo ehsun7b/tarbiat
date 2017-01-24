@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package edu.mfldclin.mcrf.tarbiat;
 
 // $example on$
@@ -33,38 +32,44 @@ import org.apache.spark.mllib.util.MLUtils;
 import org.apache.spark.SparkConf;
 
 public class JavaNaiveBayesExample {
-  public static void main(String[] args) {
-    SparkConf sparkConf = new SparkConf().setAppName("JavaNaiveBayesExample");
-    sparkConf.setMaster("local[2]");
-    JavaSparkContext jsc = new JavaSparkContext(sparkConf);
-    // $example on$
-    String path = Resource.getPath("data/mllib/sample_libsvm_data.txt");
-    JavaRDD<LabeledPoint> inputData = MLUtils.loadLibSVMFile(jsc.sc(), path).toJavaRDD();
-    JavaRDD<LabeledPoint>[] tmp = inputData.randomSplit(new double[]{0.6, 0.4});
-    JavaRDD<LabeledPoint> training = tmp[0]; // training set
-    JavaRDD<LabeledPoint> test = tmp[1]; // test set
-    final NaiveBayesModel model = NaiveBayes.train(training.rdd(), 1.0);
-    JavaPairRDD<Double, Double> predictionAndLabel =
-      test.mapToPair(new PairFunction<LabeledPoint, Double, Double>() {
-        @Override
-        public Tuple2<Double, Double> call(LabeledPoint p) {
-          return new Tuple2<>(model.predict(p.features()), p.label());
+
+    public static void main(String[] args) {
+        SparkConf sparkConf = new SparkConf().setAppName("JavaNaiveBayesExample");
+        sparkConf.setMaster("local[2]");
+        JavaSparkContext jsc = new JavaSparkContext(sparkConf);
+        // $example on$
+        String path = Resource.getPath("data/mllib/sample_libsvm_data.txt");
+
+        if (args.length > 0) {
+            path = args[0];
         }
-      });
-    double accuracy = predictionAndLabel.filter(new Function<Tuple2<Double, Double>, Boolean>() {
-      @Override
-      public Boolean call(Tuple2<Double, Double> pl) {
-        return pl._1().equals(pl._2());
-      }
-    }).count() / (double) test.count();
+        
+        JavaRDD<LabeledPoint> inputData = MLUtils.loadLibSVMFile(jsc.sc(), path).toJavaRDD();
+        JavaRDD<LabeledPoint>[] tmp = inputData.randomSplit(new double[]{0.6, 0.4});
+        JavaRDD<LabeledPoint> training = tmp[0]; // training set
+        JavaRDD<LabeledPoint> test = tmp[1]; // test set
+        final NaiveBayesModel model = NaiveBayes.train(training.rdd(), 1.0);
+        JavaPairRDD<Double, Double> predictionAndLabel
+                = test.mapToPair(new PairFunction<LabeledPoint, Double, Double>() {
+                    @Override
+                    public Tuple2<Double, Double> call(LabeledPoint p) {
+                        return new Tuple2<>(model.predict(p.features()), p.label());
+                    }
+                });
+        double accuracy = predictionAndLabel.filter(new Function<Tuple2<Double, Double>, Boolean>() {
+            @Override
+            public Boolean call(Tuple2<Double, Double> pl) {
+                return pl._1().equals(pl._2());
+            }
+        }).count() / (double) test.count();
 
-    String modelPath = "target/tmp/" + System.currentTimeMillis() + "/myNaiveBayesModel";
-    
-    // Save and load model
-    model.save(jsc.sc(), modelPath);
-    NaiveBayesModel sameModel = NaiveBayesModel.load(jsc.sc(), modelPath);
-    // $example off$
+        String modelPath = "target/tmp/" + System.currentTimeMillis() + "/myNaiveBayesModel";
 
-    jsc.stop();
-  }
+        // Save and load model
+        model.save(jsc.sc(), modelPath);
+        NaiveBayesModel sameModel = NaiveBayesModel.load(jsc.sc(), modelPath);
+        // $example off$
+
+        jsc.stop();
+    }
 }

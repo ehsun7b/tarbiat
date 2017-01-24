@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package edu.mfldclin.mcrf.tarbiat;
 
 import edu.mfldclin.mcrf.tarbiat.utils.Resource;
@@ -37,49 +36,55 @@ import org.apache.spark.mllib.util.MLUtils;
  * Example for SVMWithSGD.
  */
 public class JavaSVMWithSGDExample {
-  public static void main(String[] args) {
-    SparkConf conf = new SparkConf().setAppName("JavaSVMWithSGDExample");
-    conf.setMaster("local[2]");
-    SparkContext sc = new SparkContext(conf);
-    // $example on$
-    String path = Resource.getPath("data/mllib/sample_libsvm_data.txt");
-    JavaRDD<LabeledPoint> data = MLUtils.loadLibSVMFile(sc, path).toJavaRDD();
 
-    // Split initial RDD into two... [60% training data, 40% testing data].
-    JavaRDD<LabeledPoint> training = data.sample(false, 0.6, 11L);
-    training.cache();
-    JavaRDD<LabeledPoint> test = data.subtract(training);
+    public static void main(String[] args) {
+        SparkConf conf = new SparkConf().setAppName("JavaSVMWithSGDExample");
+        conf.setMaster("local[2]");
+        SparkContext sc = new SparkContext(conf);
+        // $example on$
+        String path = Resource.getPath("data/mllib/sample_libsvm_data.txt");
 
-    // Run training algorithm to build the model.
-    int numIterations = 100;
-    final SVMModel model = SVMWithSGD.train(training.rdd(), numIterations);
-
-    // Clear the default threshold.
-    model.clearThreshold();
-
-    // Compute raw scores on the test set.
-    JavaRDD<Tuple2<Object, Object>> scoreAndLabels = test.map(
-      new Function<LabeledPoint, Tuple2<Object, Object>>() {
-        public Tuple2<Object, Object> call(LabeledPoint p) {
-          Double score = model.predict(p.features());
-          return new Tuple2<Object, Object>(score, p.label());
+        if (args.length > 0) {
+            path = args[0];
         }
-      }
-    );
 
-    // Get evaluation metrics.
-    BinaryClassificationMetrics metrics =
-      new BinaryClassificationMetrics(JavaRDD.toRDD(scoreAndLabels));
-    double auROC = metrics.areaUnderROC();
+        JavaRDD<LabeledPoint> data = MLUtils.loadLibSVMFile(sc, path).toJavaRDD();
 
-    System.out.println("Area under ROC = " + auROC);
+        // Split initial RDD into two... [60% training data, 40% testing data].
+        JavaRDD<LabeledPoint> training = data.sample(false, 0.6, 11L);
+        training.cache();
+        JavaRDD<LabeledPoint> test = data.subtract(training);
 
-    // Save and load model
-    String modelPath = "target/tmp/" + System.currentTimeMillis() + "/javaSVMWithSGDModel";
-    model.save(sc, modelPath);
-    SVMModel sameModel = SVMModel.load(sc, modelPath);
-    // $example off$
+        // Run training algorithm to build the model.
+        int numIterations = 100;
+        final SVMModel model = SVMWithSGD.train(training.rdd(), numIterations);
 
-    sc.stop();
-  }
+        // Clear the default threshold.
+        model.clearThreshold();
+
+        // Compute raw scores on the test set.
+        JavaRDD<Tuple2<Object, Object>> scoreAndLabels = test.map(
+                new Function<LabeledPoint, Tuple2<Object, Object>>() {
+            public Tuple2<Object, Object> call(LabeledPoint p) {
+                Double score = model.predict(p.features());
+                return new Tuple2<Object, Object>(score, p.label());
+            }
+        }
+        );
+
+        // Get evaluation metrics.
+        BinaryClassificationMetrics metrics
+                = new BinaryClassificationMetrics(JavaRDD.toRDD(scoreAndLabels));
+        double auROC = metrics.areaUnderROC();
+
+        System.out.println("Area under ROC = " + auROC);
+
+        // Save and load model
+        String modelPath = "target/tmp/" + System.currentTimeMillis() + "/javaSVMWithSGDModel";
+        model.save(sc, modelPath);
+        SVMModel sameModel = SVMModel.load(sc, modelPath);
+        // $example off$
+
+        sc.stop();
+    }
 }

@@ -34,7 +34,7 @@ public class JavaAssociationRulesExample {
   public static void main(String[] args) {
 
     SparkConf sparkConf = new SparkConf().setAppName("JavaAssociationRulesExample");
-    sparkConf.setMaster("local[2]"); // nemidunam chera in bazam nabud, man ezafash kardam ahmad jan!
+    //sparkConf.setMaster("local[2]"); // nemidunam chera in bazam nabud, man ezafash kardam ahmad jan!
     JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
     // $example on$
