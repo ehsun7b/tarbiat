@@ -43,13 +43,10 @@ public class JavaSVMWithSGDExample {
         SparkConf sparkConf = new SparkConf().setAppName("JavaSVMWithSGDExample");
        // sparkConf.setMaster("local[2]");
       
-        JavaSparkContext jsc = new JavaSparkContext(sparkConf);
-       //conf.setMaster("local[2]");
-        //SparkContext sc = new SparkContext(conf);
-        // $example on$
-        //String path = Resource.getPath("data/mllib/sample_libsvm_data.txt");
+        JavaSparkContext jsc = new JavaSparkContext(sparkConf);       
         String path = ""; //Resource.getPath("data/mllib/HIGGS.txt");
 
+        
         if (args.length > 0) {
             path = args[0];
         } else {
