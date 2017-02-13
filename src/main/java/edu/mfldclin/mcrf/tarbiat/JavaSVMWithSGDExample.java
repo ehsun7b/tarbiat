@@ -48,7 +48,7 @@ public class JavaSVMWithSGDExample {
         //SparkContext sc = new SparkContext(conf);
         // $example on$
         //String path = Resource.getPath("data/mllib/sample_libsvm_data.txt");
-        String path = Resource.getPath("data/mllib/HIGGS.txt");
+        String path = ""; //Resource.getPath("data/mllib/HIGGS.txt");
 
         if (args.length > 0) {
             path = args[0];
