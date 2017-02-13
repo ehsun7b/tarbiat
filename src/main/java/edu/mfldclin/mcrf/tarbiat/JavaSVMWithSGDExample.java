@@ -52,8 +52,13 @@ public class JavaSVMWithSGDExample {
 
         if (args.length > 0) {
             path = args[0];
+        } else {
+            System.out.println("No argument passed!");
+            System.exit(-1);
         }
 
+        System.out.println("---------- inout file: " + path);
+        
         JavaRDD<LabeledPoint> data = MLUtils.loadLibSVMFile(jsc.sc(), path).toJavaRDD();
 
         // Split initial RDD into two... [60% training data, 40% testing data].
