@@ -57,7 +57,7 @@ public class JavaSVMWithSGDExample {
             System.exit(-1);
         }
 
-        System.out.println("---------- inout file: " + path);
+        System.out.println("---------- input file: " + path);
         
         JavaRDD<LabeledPoint> data = MLUtils.loadLibSVMFile(jsc.sc(), path).toJavaRDD();
 
