@@ -24,6 +24,7 @@ import org.apache.spark.SparkContext;
 import scala.Tuple2;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.mllib.classification.SVMModel;
 import org.apache.spark.mllib.classification.SVMWithSGD;
@@ -38,20 +39,25 @@ import org.apache.spark.mllib.util.MLUtils;
 public class JavaSVMWithSGDExample {
 
     public static void main(String[] args) {
-        SparkConf conf = new SparkConf().setAppName("JavaSVMWithSGDExample");
-        conf.setMaster("local[2]");
-        SparkContext sc = new SparkContext(conf);
+        //SparkConf conf = new SparkConf().setAppName("JavaSVMWithSGDExample");
+        SparkConf sparkConf = new SparkConf().setAppName("JavaSVMWithSGDExample");
+       // sparkConf.setMaster("local[2]");
+      
+        JavaSparkContext jsc = new JavaSparkContext(sparkConf);
+       //conf.setMaster("local[2]");
+        //SparkContext sc = new SparkContext(conf);
         // $example on$
-        String path = Resource.getPath("data/mllib/sample_libsvm_data.txt");
+        //String path = Resource.getPath("data/mllib/sample_libsvm_data.txt");
+        String path = Resource.getPath("data/mllib/HIGGS.txt");
 
         if (args.length > 0) {
             path = args[0];
         }
 
-        JavaRDD<LabeledPoint> data = MLUtils.loadLibSVMFile(sc, path).toJavaRDD();
+        JavaRDD<LabeledPoint> data = MLUtils.loadLibSVMFile(jsc.sc(), path).toJavaRDD();
 
         // Split initial RDD into two... [60% training data, 40% testing data].
-        JavaRDD<LabeledPoint> training = data.sample(false, 0.6, 11L);
+        JavaRDD<LabeledPoint> training = data.sample(false, 0.75, 11L);
         training.cache();
         JavaRDD<LabeledPoint> test = data.subtract(training);
 
@@ -81,10 +87,10 @@ public class JavaSVMWithSGDExample {
 
         // Save and load model
         String modelPath = "target/tmp/" + System.currentTimeMillis() + "/javaSVMWithSGDModel";
-        model.save(sc, modelPath);
-        SVMModel sameModel = SVMModel.load(sc, modelPath);
+        model.save(jsc.sc(), modelPath);
+        SVMModel sameModel = SVMModel.load(jsc.sc(), modelPath);
         // $example off$
 
-        sc.stop();
+        jsc.stop();
     }
 }

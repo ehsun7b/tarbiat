@@ -35,7 +35,7 @@ public class JavaNaiveBayesExample {
 
     public static void main(String[] args) {
         SparkConf sparkConf = new SparkConf().setAppName("JavaNaiveBayesExample");
-        sparkConf.setMaster("local[2]");
+        //sparkConf.setMaster("local[2]");
         JavaSparkContext jsc = new JavaSparkContext(sparkConf);
         // $example on$
         String path = Resource.getPath("data/mllib/sample_libsvm_data.txt");
@@ -45,7 +45,7 @@ public class JavaNaiveBayesExample {
         }
         
         JavaRDD<LabeledPoint> inputData = MLUtils.loadLibSVMFile(jsc.sc(), path).toJavaRDD();
-        JavaRDD<LabeledPoint>[] tmp = inputData.randomSplit(new double[]{0.6, 0.4});
+        JavaRDD<LabeledPoint>[] tmp = inputData.randomSplit(new double[]{0.75, 0.25});
         JavaRDD<LabeledPoint> training = tmp[0]; // training set
         JavaRDD<LabeledPoint> test = tmp[1]; // test set
         final NaiveBayesModel model = NaiveBayes.train(training.rdd(), 1.0);

@@ -39,7 +39,7 @@ public class JavaRandomForestClassificationExample {
     public static void main(String[] args) {
         // $example on$
         SparkConf sparkConf = new SparkConf().setAppName("JavaRandomForestClassificationExample");
-        sparkConf.setMaster("local[2]");
+       // sparkConf.setMaster("local[2]");
         JavaSparkContext jsc = new JavaSparkContext(sparkConf);
         // Load and parse the data file.
         String datapath = Resource.getPath("data/mllib/sample_libsvm_data.txt");
@@ -50,7 +50,7 @@ public class JavaRandomForestClassificationExample {
 
         JavaRDD<LabeledPoint> data = MLUtils.loadLibSVMFile(jsc.sc(), datapath).toJavaRDD();
         // Split the data into training and test sets (30% held out for testing)
-        JavaRDD<LabeledPoint>[] splits = data.randomSplit(new double[]{0.7, 0.3});
+        JavaRDD<LabeledPoint>[] splits = data.randomSplit(new double[]{0.75, 0.25});
         JavaRDD<LabeledPoint> trainingData = splits[0];
         JavaRDD<LabeledPoint> testData = splits[1];
 
