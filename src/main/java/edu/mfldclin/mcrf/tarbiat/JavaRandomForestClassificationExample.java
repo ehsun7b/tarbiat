@@ -19,6 +19,7 @@ package edu.mfldclin.mcrf.tarbiat;
 // $example on$
 import edu.mfldclin.mcrf.tarbiat.utils.Resource;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import scala.Tuple2;
 
@@ -48,6 +49,10 @@ public class JavaRandomForestClassificationExample {
         if (args.length > 0) {
             datapath = args[0];
         }
+        
+        System.out.println("---------- input file: " + datapath);
+        
+        long currentTimeMillis = System.currentTimeMillis();
 
         JavaRDD<LabeledPoint> data = MLUtils.loadLibSVMFile(jsc.sc(), datapath).toJavaRDD();
         // Split the data into training and test sets (30% held out for testing)
@@ -105,6 +110,18 @@ public class JavaRandomForestClassificationExample {
                 = new BinaryClassificationMetrics(JavaRDD.toRDD(scoreAndLabels));
         double auROC = metrics.areaUnderROC();
 
+        long currentTimeMillis1 = System.currentTimeMillis();
+        long elapsedTime = currentTimeMillis1 - currentTimeMillis;
+
+        String time = String.format("%d min, %d sec",
+                TimeUnit.MILLISECONDS.toMinutes(elapsedTime),
+                TimeUnit.MILLISECONDS.toSeconds(elapsedTime)
+                        - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(elapsedTime))
+        );
+
+        System.out.println("Time: " + time);
+
+        
         System.out.println("Area under ROC = " + auROC);
         
         

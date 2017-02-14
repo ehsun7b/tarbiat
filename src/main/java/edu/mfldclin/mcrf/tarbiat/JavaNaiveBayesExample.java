@@ -18,6 +18,7 @@ package edu.mfldclin.mcrf.tarbiat;
 
 // $example on$
 import edu.mfldclin.mcrf.tarbiat.utils.Resource;
+import java.util.concurrent.TimeUnit;
 import scala.Tuple2;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
@@ -44,7 +45,11 @@ public class JavaNaiveBayesExample {
         if (args.length > 0) {
             path = args[0];
         }
-        
+
+        System.out.println("---------- input file: " + path);
+
+        long currentTimeMillis = System.currentTimeMillis();
+
         JavaRDD<LabeledPoint> inputData = MLUtils.loadLibSVMFile(jsc.sc(), path).toJavaRDD();
         JavaRDD<LabeledPoint>[] tmp = inputData.randomSplit(new double[]{0.75, 0.25});
         JavaRDD<LabeledPoint> training = tmp[0]; // training set
@@ -63,10 +68,7 @@ public class JavaNaiveBayesExample {
                 return pl._1().equals(pl._2());
             }
         }).count() / (double) test.count();
-        
-        
-        
-        
+
         // Compute raw scores on the test set.
         JavaRDD<Tuple2<Object, Object>> scoreAndLabels = test.map(
                 new Function<LabeledPoint, Tuple2<Object, Object>>() {
@@ -76,16 +78,23 @@ public class JavaNaiveBayesExample {
             }
         }
         );
-        
-        
-        
+
         BinaryClassificationMetrics metrics
                 = new BinaryClassificationMetrics(JavaRDD.toRDD(scoreAndLabels));
         double auROC = metrics.areaUnderROC();
 
+        long currentTimeMillis1 = System.currentTimeMillis();
+        long elapsedTime = currentTimeMillis1 - currentTimeMillis;
+
+        String time = String.format("%d min, %d sec",
+                TimeUnit.MILLISECONDS.toMinutes(elapsedTime),
+                TimeUnit.MILLISECONDS.toSeconds(elapsedTime)
+                - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(elapsedTime))
+        );
+
+        System.out.println("Time: " + time);
         System.out.println("Area under ROC = " + auROC);
         
-
         String modelPath = "target/tmp/" + System.currentTimeMillis() + "/myNaiveBayesModel";
 
         // Save and load model

@@ -17,6 +17,10 @@
 package edu.mfldclin.mcrf.tarbiat;
 
 import edu.mfldclin.mcrf.tarbiat.utils.Resource;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 
@@ -41,20 +45,22 @@ public class JavaSVMWithSGDExample {
     public static void main(String[] args) {
         //SparkConf conf = new SparkConf().setAppName("JavaSVMWithSGDExample");
         SparkConf sparkConf = new SparkConf().setAppName("JavaSVMWithSGDExample");
-       // sparkConf.setMaster("local[2]");
-      
-        JavaSparkContext jsc = new JavaSparkContext(sparkConf);       
-        String path = ""; //Resource.getPath("data/mllib/HIGGS.txt");
+        sparkConf.setMaster("local[2]");        
 
-        
+        //sparkConf.set(key, value)
+        JavaSparkContext jsc = new JavaSparkContext(sparkConf);
+        String path = Resource.getPath("data/mllib/sample_svm_data.txt");
+
         if (args.length > 0) {
             path = args[0];
-        } else {
+        }/* else {
             System.out.println("No argument passed!");
             System.exit(-1);
-        }
+        }*/
 
         System.out.println("---------- input file: " + path);
+        
+        long currentTimeMillis = System.currentTimeMillis();
         
         JavaRDD<LabeledPoint> data = MLUtils.loadLibSVMFile(jsc.sc(), path).toJavaRDD();
 
@@ -85,6 +91,16 @@ public class JavaSVMWithSGDExample {
                 = new BinaryClassificationMetrics(JavaRDD.toRDD(scoreAndLabels));
         double auROC = metrics.areaUnderROC();
 
+        long currentTimeMillis1 = System.currentTimeMillis();
+        long elapsedTime = currentTimeMillis1 - currentTimeMillis;
+
+        String time = String.format("%d min, %d sec",
+                TimeUnit.MILLISECONDS.toMinutes(elapsedTime),
+                TimeUnit.MILLISECONDS.toSeconds(elapsedTime)
+                        - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(elapsedTime))
+        );
+
+        System.out.println("Time: " + time);
         System.out.println("Area under ROC = " + auROC);
 
         // Save and load model
@@ -95,4 +111,5 @@ public class JavaSVMWithSGDExample {
 
         jsc.stop();
     }
+
 }

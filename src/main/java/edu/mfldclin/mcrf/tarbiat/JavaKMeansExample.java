@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package edu.mfldclin.mcrf.tarbiat;
 
 import edu.mfldclin.mcrf.tarbiat.utils.Resource;
+import java.util.concurrent.TimeUnit;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 
@@ -31,53 +31,74 @@ import org.apache.spark.mllib.linalg.Vectors;
 // $example off$
 
 public class JavaKMeansExample {
-  public static void main(String[] args) {
 
-    SparkConf conf = new SparkConf().setAppName("JavaKMeansExample");
-    conf.setMaster("local[2]");
-    JavaSparkContext jsc = new JavaSparkContext(conf);
+    public static void main(String[] args) {
 
-    // $example on$
-    // Load and parse data
-    String path = Resource.getPath("data/mllib/kmeans_data.txt");
-    JavaRDD<String> data = jsc.textFile(path);
-    JavaRDD<Vector> parsedData = data.map(
-      new Function<String, Vector>() {
-        public Vector call(String s) {
-          String[] sarray = s.split(" ");
-          double[] values = new double[sarray.length];
-          for (int i = 0; i < sarray.length; i++) {
-            values[i] = Double.parseDouble(sarray[i]);
-          }
-          return Vectors.dense(values);
+        SparkConf conf = new SparkConf().setAppName("JavaKMeansExample");
+        conf.setMaster("local[2]");
+        JavaSparkContext jsc = new JavaSparkContext(conf);
+
+        // $example on$
+        // Load and parse data
+        String path = Resource.getPath("data/mllib/kmeans_data.txt");
+
+        if (args.length > 0) {
+            path = args[0];
         }
-      }
-    );
-    parsedData.cache();
 
-    // Cluster the data into two classes using KMeans
-    int numClusters = 2;
-    int numIterations = 20;
-    KMeansModel clusters = KMeans.train(parsedData.rdd(), numClusters, numIterations);
+        System.out.println("---------- input file: " + path);
 
-    System.out.println("Cluster centers:");
-    for (Vector center: clusters.clusterCenters()) {
-      System.out.println(" " + center);
+        long currentTimeMillis = System.currentTimeMillis();
+
+        JavaRDD<String> data = jsc.textFile(path);
+        JavaRDD<Vector> parsedData = data.map(
+                new Function<String, Vector>() {
+            public Vector call(String s) {
+                String[] sarray = s.split(" ");
+                double[] values = new double[sarray.length];
+                for (int i = 0; i < sarray.length; i++) {
+                    values[i] = Double.parseDouble(sarray[i]);
+                }
+                return Vectors.dense(values);
+            }
+        }
+        );
+        parsedData.cache();
+
+        // Cluster the data into two classes using KMeans
+        int numClusters = 2;
+        int numIterations = 20;
+        KMeansModel clusters = KMeans.train(parsedData.rdd(), numClusters, numIterations);
+
+        System.out.println("Cluster centers:");
+        for (Vector center : clusters.clusterCenters()) {
+            System.out.println(" " + center);
+        }
+        double cost = clusters.computeCost(parsedData.rdd());
+        System.out.println("Cost: " + cost);
+
+        // Evaluate clustering by computing Within Set Sum of Squared Errors
+        double WSSSE = clusters.computeCost(parsedData.rdd());
+        System.out.println("Within Set Sum of Squared Errors = " + WSSSE);
+
+        long currentTimeMillis1 = System.currentTimeMillis();
+        long elapsedTime = currentTimeMillis1 - currentTimeMillis;
+
+        String time = String.format("%d min, %d sec",
+                TimeUnit.MILLISECONDS.toMinutes(elapsedTime),
+                TimeUnit.MILLISECONDS.toSeconds(elapsedTime)
+                - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(elapsedTime))
+        );
+
+        System.out.println("Time: " + time);
+
+        String runId = System.currentTimeMillis() + "";
+        // Save and load model
+        clusters.save(jsc.sc(), "target/" + runId + "/KMeansModel");
+        KMeansModel sameModel = KMeansModel.load(jsc.sc(),
+                "target/" + runId + "/KMeansModel");
+        // $example off$
+
+        jsc.stop();
     }
-    double cost = clusters.computeCost(parsedData.rdd());
-    System.out.println("Cost: " + cost);
-
-    // Evaluate clustering by computing Within Set Sum of Squared Errors
-    double WSSSE = clusters.computeCost(parsedData.rdd());
-    System.out.println("Within Set Sum of Squared Errors = " + WSSSE);
-
-    String runId = System.currentTimeMillis() + "";
-    // Save and load model
-    clusters.save(jsc.sc(), "target/" + runId + "/KMeansModel");
-    KMeansModel sameModel = KMeansModel.load(jsc.sc(),
-      "target/" + runId + "/KMeansModel");
-    // $example off$
-
-    jsc.stop();
-  }
 }

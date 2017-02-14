@@ -20,6 +20,7 @@ package edu.mfldclin.mcrf.tarbiat;
 import edu.mfldclin.mcrf.tarbiat.utils.Resource;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import scala.Tuple2;
 
@@ -51,7 +52,11 @@ public class JavaDecisionTreeClassificationExample {
         if (args.length > 0) {
             datapath = args[0];
         }
-        
+
+        System.out.println("---------- input file: " + datapath);
+
+        long currentTimeMillis = System.currentTimeMillis();
+
         System.out.println("Data: " + datapath);
         JavaRDD<LabeledPoint> data = MLUtils.loadLibSVMFile(jsc.sc(), datapath).toJavaRDD();
         // Split the data into training and test sets (30% held out for testing)
@@ -86,9 +91,7 @@ public class JavaDecisionTreeClassificationExample {
                         return !pl._1().equals(pl._2());
                     }
                 }).count() / testData.count();
-        
-        
-        
+
         // Compute raw scores on the test set.
         JavaRDD<Tuple2<Object, Object>> scoreAndLabels = testData.map(
                 new Function<LabeledPoint, Tuple2<Object, Object>>() {
@@ -98,18 +101,23 @@ public class JavaDecisionTreeClassificationExample {
             }
         }
         );
-        
-        
-        
+
         BinaryClassificationMetrics metrics
                 = new BinaryClassificationMetrics(JavaRDD.toRDD(scoreAndLabels));
         double auROC = metrics.areaUnderROC();
 
+        long currentTimeMillis1 = System.currentTimeMillis();
+        long elapsedTime = currentTimeMillis1 - currentTimeMillis;
+
+        String time = String.format("%d min, %d sec",
+                TimeUnit.MILLISECONDS.toMinutes(elapsedTime),
+                TimeUnit.MILLISECONDS.toSeconds(elapsedTime)
+                - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(elapsedTime))
+        );
+
+        System.out.println("Time: " + time);
+
         System.out.println("Area under ROC = " + auROC);
-        
-        
-        
-        
 
         System.out.println("Test Error: " + testErr);
         System.out.println("Learned classification tree model:\n" + model.toDebugString());
