@@ -29,6 +29,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics;
 import org.apache.spark.mllib.regression.LabeledPoint;
 import org.apache.spark.mllib.tree.DecisionTree;
 import org.apache.spark.mllib.tree.model.DecisionTreeModel;
@@ -41,7 +42,7 @@ public class JavaDecisionTreeClassificationExample {
 
         // $example on$
         SparkConf sparkConf = new SparkConf().setAppName("JavaDecisionTreeClassificationExample");
-        //sparkConf.setMaster("local[2]");
+        sparkConf.setMaster("local[2]");
         JavaSparkContext jsc = new JavaSparkContext(sparkConf);
 
         // Load and parse the data file.
@@ -85,6 +86,30 @@ public class JavaDecisionTreeClassificationExample {
                         return !pl._1().equals(pl._2());
                     }
                 }).count() / testData.count();
+        
+        
+        
+        // Compute raw scores on the test set.
+        JavaRDD<Tuple2<Object, Object>> scoreAndLabels = testData.map(
+                new Function<LabeledPoint, Tuple2<Object, Object>>() {
+            public Tuple2<Object, Object> call(LabeledPoint p) {
+                Double score = model.predict(p.features());
+                return new Tuple2<Object, Object>(score, p.label());
+            }
+        }
+        );
+        
+        
+        
+        BinaryClassificationMetrics metrics
+                = new BinaryClassificationMetrics(JavaRDD.toRDD(scoreAndLabels));
+        double auROC = metrics.areaUnderROC();
+
+        System.out.println("Area under ROC = " + auROC);
+        
+        
+        
+        
 
         System.out.println("Test Error: " + testErr);
         System.out.println("Learned classification tree model:\n" + model.toDebugString());

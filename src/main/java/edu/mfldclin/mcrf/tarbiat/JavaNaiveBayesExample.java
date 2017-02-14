@@ -30,12 +30,13 @@ import org.apache.spark.mllib.regression.LabeledPoint;
 import org.apache.spark.mllib.util.MLUtils;
 // $example off$
 import org.apache.spark.SparkConf;
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics;
 
 public class JavaNaiveBayesExample {
 
     public static void main(String[] args) {
         SparkConf sparkConf = new SparkConf().setAppName("JavaNaiveBayesExample");
-        //sparkConf.setMaster("local[2]");
+        sparkConf.setMaster("local[2]");
         JavaSparkContext jsc = new JavaSparkContext(sparkConf);
         // $example on$
         String path = Resource.getPath("data/mllib/sample_libsvm_data.txt");
@@ -62,6 +63,28 @@ public class JavaNaiveBayesExample {
                 return pl._1().equals(pl._2());
             }
         }).count() / (double) test.count();
+        
+        
+        
+        
+        // Compute raw scores on the test set.
+        JavaRDD<Tuple2<Object, Object>> scoreAndLabels = test.map(
+                new Function<LabeledPoint, Tuple2<Object, Object>>() {
+            public Tuple2<Object, Object> call(LabeledPoint p) {
+                Double score = model.predict(p.features());
+                return new Tuple2<Object, Object>(score, p.label());
+            }
+        }
+        );
+        
+        
+        
+        BinaryClassificationMetrics metrics
+                = new BinaryClassificationMetrics(JavaRDD.toRDD(scoreAndLabels));
+        double auROC = metrics.areaUnderROC();
+
+        System.out.println("Area under ROC = " + auROC);
+        
 
         String modelPath = "target/tmp/" + System.currentTimeMillis() + "/myNaiveBayesModel";
 
